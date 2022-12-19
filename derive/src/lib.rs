@@ -253,7 +253,7 @@ fn expand_ref_cast(input: DeriveInput) -> Result<TokenStream2> {
         Some(quote! {
             if false {
                 #(
-                    ::ref_cast::private::assert_trivial::<#trivial>();
+                    ::ref_cast::__private::assert_trivial::<#trivial>();
                 )*
             }
         })
@@ -271,13 +271,13 @@ fn expand_ref_cast(input: DeriveInput) -> Result<TokenStream2> {
                 #[cfg(debug_assertions)]
                 {
                     #[allow(unused_imports)]
-                    use ::ref_cast::private::LayoutUnsized;
-                    ::ref_cast::private::assert_layout::<Self, Self::From>(
+                    use ::ref_cast::__private::LayoutUnsized;
+                    ::ref_cast::__private::assert_layout::<Self, Self::From>(
                         #name_str,
-                        ::ref_cast::private::Layout::<Self>::SIZE,
-                        ::ref_cast::private::Layout::<Self::From>::SIZE,
-                        ::ref_cast::private::Layout::<Self>::ALIGN,
-                        ::ref_cast::private::Layout::<Self::From>::ALIGN,
+                        ::ref_cast::__private::Layout::<Self>::SIZE,
+                        ::ref_cast::__private::Layout::<Self::From>::SIZE,
+                        ::ref_cast::__private::Layout::<Self>::ALIGN,
+                        ::ref_cast::__private::Layout::<Self::From>::ALIGN,
                     );
                 }
                 unsafe {
@@ -290,13 +290,13 @@ fn expand_ref_cast(input: DeriveInput) -> Result<TokenStream2> {
                 #[cfg(debug_assertions)]
                 {
                     #[allow(unused_imports)]
-                    use ::ref_cast::private::LayoutUnsized;
-                    ::ref_cast::private::assert_layout::<Self, Self::From>(
+                    use ::ref_cast::__private::LayoutUnsized;
+                    ::ref_cast::__private::assert_layout::<Self, Self::From>(
                         #name_str,
-                        ::ref_cast::private::Layout::<Self>::SIZE,
-                        ::ref_cast::private::Layout::<Self::From>::SIZE,
-                        ::ref_cast::private::Layout::<Self>::ALIGN,
-                        ::ref_cast::private::Layout::<Self::From>::ALIGN,
+                        ::ref_cast::__private::Layout::<Self>::SIZE,
+                        ::ref_cast::__private::Layout::<Self::From>::SIZE,
+                        ::ref_cast::__private::Layout::<Self>::ALIGN,
+                        ::ref_cast::__private::Layout::<Self::From>::ALIGN,
                     );
                 }
                 unsafe {
