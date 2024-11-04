@@ -135,13 +135,16 @@
 //! }
 //! ```
 
-#![doc(html_root_url = "https://docs.rs/ref-cast/1.0.14")]
+#![doc(html_root_url = "https://docs.rs/ref-cast/1.0.23")]
 #![no_std]
 #![allow(
+    clippy::extra_unused_type_parameters,
+    clippy::let_underscore_untyped,
     clippy::manual_assert,
     clippy::missing_panics_doc,
     clippy::missing_safety_doc,
     clippy::module_name_repetitions,
+    clippy::needless_doctest_main,
     clippy::needless_pass_by_value
 )]
 
@@ -180,8 +183,12 @@ pub trait RefCast {
 // Not public API.
 #[doc(hidden)]
 pub mod __private {
+    #[doc(hidden)]
     pub use crate::custom::{ref_cast_custom, CurrentCrate, RefCastCustom};
+    #[doc(hidden)]
     pub use crate::layout::{assert_layout, Layout, LayoutUnsized};
+    #[doc(hidden)]
     pub use crate::trivial::assert_trivial;
+    #[doc(hidden)]
     pub use core::mem::transmute;
 }

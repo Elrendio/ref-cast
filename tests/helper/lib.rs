@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use ref_cast::RefCastCustom;
 
 #[derive(RefCastCustom)]

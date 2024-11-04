@@ -1,4 +1,8 @@
-#![allow(clippy::needless_pass_by_value, clippy::if_not_else)]
+#![allow(
+    clippy::blocks_in_conditions,
+    clippy::needless_pass_by_value,
+    clippy::if_not_else
+)]
 
 extern crate proc_macro;
 
@@ -377,11 +381,19 @@ fn expand_function_body(function: Function) -> TokenStream2 {
 
     let mut inline_attr = Some(quote!(#[inline]));
     for attr in &attrs {
-        if attr.path.is_ident("inline") {
+        if attr.path().is_ident("inline") {
             inline_attr = None;
             break;
         }
     }
+
+    // Apply a macro-generated span to the "unsafe" token for the unsafe block.
+    // This is instead of reusing the caller's function signature's #unsafety
+    // across both the generated function signature and generated unsafe block,
+    // and instead of using `semi_token.span` like for the rest of the generated
+    // code below, both of which would cause `forbid(unsafe_code)` located in
+    // the caller to reject the expanded code.
+    let macro_generated_unsafe = quote!(unsafe);
 
     quote_spanned! {semi_token.span=>
         #(#attrs)*
@@ -397,7 +409,8 @@ fn expand_function_body(function: Function) -> TokenStream2 {
             let _ = ::ref_cast::__private::CurrentCrate::<#from_type, #to_type> {};
 
             #allow_unused_unsafe // in case they are building with deny(unsafe_op_in_unsafe_fn)
-            unsafe {
+            #[allow(clippy::transmute_ptr_to_ptr)]
+            #macro_generated_unsafe {
                 ::ref_cast::__private::transmute::<#from_type, #to_type>(#arg)
             }
         }
@@ -413,7 +426,7 @@ fn check_repr(input: &DeriveInput) -> Result<()> {
     };
 
     for attr in &input.attrs {
-        if attr.path.is_ident("repr") {
+        if attr.path().is_ident("repr") {
             if let Err(error) = attr.parse_args_with(|input: ParseStream| {
                 while !input.is_empty() {
                     let path = input.call(Path::parse_mod_style)?;
@@ -549,8 +562,8 @@ fn is_implicit_trivial(field: &Field) -> Result<bool> {
 
 fn is_explicit_trivial(field: &Field) -> Result<bool> {
     for attr in &field.attrs {
-        if attr.path.is_ident("trivial") {
-            syn::parse2::<Nothing>(attr.tokens.clone())?;
+        if attr.path().is_ident("trivial") {
+            attr.meta.require_path_only()?;
             return Ok(true);
         }
     }
