@@ -22,61 +22,28 @@ impl Container {
     /// Extract out the `#[ref_cast(...)]` attributes from an item.
     pub fn from_ast(item: &syn::DeriveInput) -> crate::Result<Self> {
         let mut crate_ref_cast_path = None;
-        for meta_item in item
-            .attrs
-            .iter()
-            .flat_map(|attr| parse_meta_items(attr))
-            .flatten()
-        {
-            use syn::{Meta::NameValue, NestedMeta};
-            match &meta_item {
+        for meta_item in item.attrs.iter().filter(|attr| attr.path() == REF_CAST) {
+            meta_item.parse_nested_meta(|attr| match attr.path.get_ident() {
                 // Parse `#[ref_cast(crate = "foo")]`
-                NestedMeta::Meta(NameValue(m)) if m.path == CRATE => {
-                    crate_ref_cast_path = Some(parse_lit_into_path(CRATE, &m.lit)?);
+                Some(ident) if ident == CRATE => {
+                    crate_ref_cast_path =
+                        Some(parse_lit_into_path(CRATE, &attr.value()?.parse()?)?);
+                    Ok(())
                 }
-                NestedMeta::Meta(meta_item) => {
-                    let path = meta_item
-                        .path()
-                        .into_token_stream()
-                        .to_string()
-                        .replace(' ', "");
-                    return Err(Error::new_spanned(
-                        meta_item.path(),
-                        format!("unknown ref_cast container attribute `{}`", path),
-                    ));
-                }
-                NestedMeta::Lit(lit) => {
-                    return Err(Error::new_spanned(
-                        lit,
-                        "unexpected literal in ref_cast container attribute",
-                    ));
-                }
-            }
+                _ => Err(Error::new_spanned(
+                    meta_item.path(),
+                    format!(
+                        "unknown ref_cast container attribute `{}`",
+                        attr.path.into_token_stream().to_string().replace(' ', "")
+                    ),
+                )),
+            })?;
         }
 
         Ok(Self {
             crate_ref_cast_path: crate_ref_cast_path
                 .unwrap_or_else(|| syn::parse_str(&format!("::{}", REF_CAST)).unwrap()),
         })
-    }
-}
-
-/// Parses element of `ref_cast` attributes list for example `crate = "ref_cast_alias"` in
-/// `#[ref_cast(crate = "ref_cast_alias")]`
-///
-/// See [`syn::NestedMeta`](/syn/enum.NestedMeta.html) for more info.
-fn parse_meta_items(attr: &syn::Attribute) -> crate::Result<Vec<syn::NestedMeta>> {
-    use syn::Meta::List;
-    if attr.path != REF_CAST {
-        return Ok(Vec::new());
-    }
-
-    match attr.parse_meta()? {
-        List(meta) => Ok(meta.nested.into_iter().collect()),
-        other => Err(Error::new_spanned(
-            other.into_token_stream(),
-            "expected #[ref_cast(...)]",
-        )),
     }
 }
 
